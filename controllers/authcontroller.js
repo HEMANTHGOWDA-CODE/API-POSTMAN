@@ -2,7 +2,7 @@ const User=require('../models/user.js')
 const jwt = require('jsonwebtoken');
 
 const bcrypt = require('bcrypt');
-
+let key="nf8347fy4yfb8347gfb347gfb34gf634b34f"
 //  Register Controller 
 exports.register = async (req, res) => {
   try {
@@ -104,7 +104,7 @@ exports.login = async (req, res) => {
     // 🔐 generate token
     const token = jwt.sign(
       { id: user._id, email: user.email },
-      "secretkey", // later move to .env
+      key, // later move to .env
       { expiresIn: "1h" }
     );
 

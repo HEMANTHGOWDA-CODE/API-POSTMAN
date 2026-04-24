@@ -45,6 +45,8 @@ const userSchema = new mongoose.Schema({
   }
 
 });
+
+//  These is Used for the Password Hashing 
 userSchema.pre('save', async function () {
   // only hash if password is modified
   if (!this.isModified('password')) return;
