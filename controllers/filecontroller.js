@@ -205,3 +205,86 @@ exports.renameFile = async (req, res) => {
   }
 };
 
+
+exports.getFileAnalytics = async (req, res) => {
+  try {
+    console.log("➡️ File analytics API called");
+
+    let { startDate, endDate } = req.query;
+
+    // 🔹 build match filter
+    let matchStage = {};
+
+    if (startDate || endDate) {
+      matchStage.createdAt = {};
+
+      if (startDate) {
+        matchStage.createdAt.$gte = new Date(startDate);
+      }
+
+      if (endDate) {
+        matchStage.createdAt.$lte = new Date(endDate);
+      }
+    }
+
+    console.log("📅 Date filter:", matchStage);
+
+    const data = await File.aggregate([
+
+      // 🔥 apply filter here
+      { $match: matchStage },
+
+      {
+        $group: {
+          _id: "$userId",
+          fileCount: { $sum: 1 },
+          uniqueFiles: { $addToSet: "$fileName" },
+          latestFileDate: { $max: "$createdAt" }
+        }
+      },
+
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+
+      {
+        $unwind: "$user"
+      },
+
+      {
+        $project: {
+          _id: 0,
+          userId: "$_id",
+          userName: "$user.name",
+          fileCount: 1,
+          uniqueFiles: 1,
+          distinctFileCount: { $size: "$uniqueFiles" },
+          createdAt: "$latestFileDate"
+        }
+      }
+
+    ]);
+
+    console.log("✅ Analytics fetched:", data.length);
+
+    res.status(200).json({
+      success: true,
+      message: "File analytics fetched successfully",
+      count: data.length,
+      data
+    });
+
+  } catch (error) {
+    console.log("❌ Analytics error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch analytics"
+    });
+  }
+};
